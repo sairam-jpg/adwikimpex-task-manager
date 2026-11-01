@@ -1,0 +1,368 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Adwik Impex | Office Tasks</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f3f5f8;color:#172033;font-family:Arial,sans-serif}
+header{background:#142b46;color:white;padding:22px}
+header h2{margin:0 0 6px}
+main{max-width:850px;margin:22px auto;padding:16px}
+.card{background:white;padding:20px;border-radius:14px;margin-bottom:16px;box-shadow:0 2px 10px #0000000c}
+input,select,button{width:100%;padding:13px;margin:7px 0;border:1px solid #ccd3dc;border-radius:8px;font-size:15px}
+button{background:#1769aa;color:white;border:0;font-weight:bold;cursor:pointer}
+button.secondary{background:#526477}
+.task{border:1px solid #e0e5eb;border-radius:10px;padding:14px;margin:12px 0}
+.task h3{margin:0 0 8px;overflow-wrap:anywhere}
+.meta{font-size:13px;color:#667085;line-height:1.7}
+.status{font-weight:bold;color:#1769aa}
+.hidden{display:none}
+.row{display:flex;gap:10px;align-items:center}
+.row button{width:auto}
+#message{color:#b42318;font-size:14px}
+@media(max-width:500px){main{padding:10px}.row{flex-wrap:wrap}}
+</style>
+</head>
+<body>
+<header>
+<h2>Adwik Impex</h2>
+<div>Office Task Management</div>
+</header>
+
+<main>
+<section id="login" class="card">
+<h2>Welcome to Office Tasks</h2>
+<p>Sign in using your company Google account.</p>
+<button onclick="login()">Sign in with Google</button>
+<p id="message"></p>
+</section>
+
+<section id="app" class="hidden">
+<div class="card">
+<div class="row">
+<div style="flex:1">
+<h3>Office Dashboard</h3>
+<div id="userEmail" class="meta"></div>
+</div>
+<button class="secondary" onclick="logout()">Sign out</button>
+</div>
+</div>
+
+<div class="card">
+<h3>+ Create a Task</h3>
+<form id="taskForm">
+<label>Task title</label>
+<input id="title" maxlength="140" required placeholder="What needs to be done?">
+
+<label>Assign to company email</label>
+<input id="assignee" type="email" required
+placeholder="employee@adwikimpex.com">
+
+<label>Priority</label>
+<select id="priority">
+<option>Normal</option>
+<option>High</option>
+<option>Urgent</option>
+</select>
+<button type="submit">Create Task</button>
+</form>
+<p id="taskMessage"></p>
+</div>
+
+<div class="card">
+<h3>All Office Tasks</h3>
+<label>Filter tasks</label>
+<select id="filter" onchange="renderTasks()">
+<option value="All">All tasks</option>
+<option>Pending</option>
+<option>In Progress</option>
+<option>Completed</option>
+</select>
+<div id="taskList">Loading tasks...</div>
+</div>
+</section>
+</main>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCdWiE0DEK6iaVLArSndVFtb4AmyabpXUw",
+  authDomain: "adwikimpex-task-manager.firebaseapp.com",
+  projectId: "adwikimpex-task-manager",
+  storageBucket: "adwikimpex-task-manager.firebasestorage.app",
+  messagingSenderId: "1049216214773",
+  appId: "1:1049216214773:web:e3475dbf9dc38ab1a987bc",
+  measurementId: "G-X5E8T35VP8"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const auth = firebase.auth();
+const db = firebase.firestore();
+const provider = new firebase.auth.GoogleAuthProvider();
+
+provider.setCustomParameters({ prompt: "select_account" });
+
+let currentUser = null;
+let tasks = [];
+let unsubscribe = null;
+let authReady = false;
+
+const loginSection = document.getElementById("login");
+const appSection = document.getElementById("app");
+const loginButton = loginSection.querySelector("button");
+const loginMessage = document.getElementById("message");
+
+function showLoginMessage(message) {
+  loginMessage.textContent = message || "";
+}
+
+function isCompanyAccount(user) {
+  return !!(user && user.email &&
+    user.email.toLowerCase().endsWith("@adwikimpex.com"));
+}
+
+async function login() {
+  if (!authReady) {
+    showLoginMessage("Please wait. Authentication is initializing...");
+    return;
+  }
+
+  loginButton.disabled = true;
+  loginButton.textContent = "Opening Google sign-in...";
+  showLoginMessage("");
+
+  try {
+    // A popup avoids the cross-domain redirect/session issues commonly
+    // encountered when a Firebase app is hosted on GitHub Pages.
+    await auth.signInWithPopup(provider);
+  } catch (error) {
+    console.error("Google sign-in error:", error);
+
+    // If the browser blocks popups or does not support them, use redirect.
+    const redirectFallbackCodes = [
+      "auth/popup-blocked",
+      "auth/operation-not-supported-in-this-environment"
+    ];
+
+    if (redirectFallbackCodes.includes(error.code)) {
+      try {
+        await auth.signInWithRedirect(provider);
+        return;
+      } catch (redirectError) {
+        console.error("Google redirect sign-in error:", redirectError);
+        showLoginMessage(getFriendlyAuthError(redirectError));
+      }
+    } else {
+      showLoginMessage(getFriendlyAuthError(error));
+    }
+  } finally {
+    // A successful redirect navigates away; otherwise restore the button.
+    loginButton.disabled = false;
+    loginButton.textContent = "Sign in with Google";
+  }
+}
+
+function getFriendlyAuthError(error) {
+  const messages = {
+    "auth/unauthorized-domain":
+      "This website domain is not authorized in Firebase Authentication. Add sairam-jpg.github.io under Firebase Authentication > Settings > Authorized domains.",
+    "auth/popup-closed-by-user":
+      "The Google sign-in window was closed before sign-in completed.",
+    "auth/cancelled-popup-request":
+      "A sign-in window is already open. Complete that sign-in first.",
+    "auth/network-request-failed":
+      "Network error. Check your internet connection and try again.",
+    "auth/account-exists-with-different-credential":
+      "An account already exists with this email using a different sign-in method."
+  };
+
+  return messages[error.code] ||
+    ("Google sign-in failed: " + (error.message || error.code || "Unknown error"));
+}
+
+async function logout() {
+  try {
+    await auth.signOut();
+  } catch (error) {
+    alert("Sign-out failed: " + error.message);
+  }
+}
+
+// Set persistence explicitly so the session survives browser restarts.
+(async function initializeAuthentication() {
+  try {
+    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
+    // Complete any pending redirect sign-in before handling the auth state.
+    try {
+      await auth.getRedirectResult();
+    } catch (error) {
+      console.error("Redirect result error:", error);
+      showLoginMessage(getFriendlyAuthError(error));
+    }
+  } catch (error) {
+    console.error("Authentication initialization error:", error);
+    showLoginMessage(getFriendlyAuthError(error));
+  } finally {
+    authReady = true;
+    loginButton.disabled = false;
+    loginButton.textContent = "Sign in with Google";
+  }
+})();
+
+auth.onAuthStateChanged(user => {
+  if (unsubscribe) {
+    unsubscribe();
+    unsubscribe = null;
+  }
+
+  currentUser = user;
+
+  if (isCompanyAccount(user)) {
+    loginSection.classList.add("hidden");
+    appSection.classList.remove("hidden");
+    document.getElementById("userEmail").textContent = user.email;
+    showLoginMessage("");
+    listenTasks();
+  } else {
+    appSection.classList.add("hidden");
+    loginSection.classList.remove("hidden");
+
+    if (user) {
+      showLoginMessage(
+        "Access denied. Please sign in using your @adwikimpex.com company account."
+      );
+      auth.signOut().catch(error => console.error("Sign-out error:", error));
+    }
+  }
+});
+
+function listenTasks() {
+  unsubscribe = db.collection("tasks").onSnapshot(snapshot => {
+    tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    tasks.sort((a, b) => {
+      const x = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0;
+      const y = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0;
+      return y - x;
+    });
+    renderTasks();
+  }, error => {
+    document.getElementById("taskList").textContent =
+      "Unable to load tasks: " + error.message;
+  });
+}
+
+document.getElementById("taskForm").addEventListener("submit", async e => {
+  e.preventDefault();
+
+  const msg = document.getElementById("taskMessage");
+  const title = document.getElementById("title").value.trim();
+  const email = document.getElementById("assignee").value.trim().toLowerCase();
+  const priority = document.getElementById("priority").value;
+
+  msg.style.color = "#b42318";
+
+  if (!currentUser || !isCompanyAccount(currentUser)) {
+    msg.textContent = "Please sign in with your company account first.";
+    return;
+  }
+
+  if (!email.endsWith("@adwikimpex.com")) {
+    msg.textContent = "Please enter a valid @adwikimpex.com company email.";
+    return;
+  }
+
+  try {
+    await db.collection("tasks").add({
+      title: title,
+      assigneeEmail: email,
+      createdBy: currentUser.email,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      status: "Pending",
+      priority: priority
+    });
+
+    e.target.reset();
+    msg.style.color = "green";
+    msg.textContent = "Task created successfully!";
+  } catch (error) {
+    msg.style.color = "#b42318";
+    msg.textContent = error.message;
+  }
+});
+
+function renderTasks() {
+  const list = document.getElementById("taskList");
+  const filter = document.getElementById("filter").value;
+  const visible = tasks.filter(t => filter === "All" || t.status === filter);
+
+  list.innerHTML = "";
+
+  if (!visible.length) {
+    list.textContent = "No tasks found.";
+    return;
+  }
+
+  visible.forEach(t => {
+    const card = document.createElement("div");
+    card.className = "task";
+
+    const title = document.createElement("h3");
+    title.textContent = t.title || "Untitled task";
+
+    const meta = document.createElement("div");
+    meta.className = "meta";
+    meta.textContent = "Assigned to: " + (t.assigneeEmail || "") +
+      " | Created by: " + (t.createdBy || "") +
+      " | Priority: " + (t.priority || "Normal");
+
+    const status = document.createElement("p");
+    status.className = "status";
+    status.textContent = "Status: " + (t.status || "Pending");
+
+    card.append(title, meta, status);
+
+    const select = document.createElement("select");
+    ["Pending", "In Progress", "Completed"].forEach(s => {
+      const option = document.createElement("option");
+      option.value = s;
+      option.textContent = s;
+      option.selected = (t.status || "Pending") === s;
+      select.appendChild(option);
+    });
+
+    const button = document.createElement("button");
+    button.textContent = "Update Status";
+    button.onclick = () => updateStatus(t.id, select.value, button);
+
+    card.append(select, button);
+    list.appendChild(card);
+  });
+}
+
+async function updateStatus(id, status, button) {
+  button.disabled = true;
+
+  try {
+    await db.collection("tasks").doc(id).update({
+      status: status,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      completedAt: status === "Completed"
+        ? firebase.firestore.FieldValue.serverTimestamp()
+        : null
+    });
+  } catch (error) {
+    alert("Update failed: " + error.message);
+  } finally {
+    button.disabled = false;
+  }
+}
+</script>
+</body>
+</html>
