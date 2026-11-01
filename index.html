@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,6 +21,18 @@ button.secondary{background:#526477}
 .task h3{margin:0 0 8px;overflow-wrap:anywhere}
 .meta{font-size:13px;color:#667085;line-height:1.7}
 .status{font-weight:bold;color:#1769aa}
+.badges{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0}
+.tag{display:inline-block;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:bold}
+.stage-pending{background:#fff4cc;color:#8a5a00}
+.stage-progress{background:#dbeafe;color:#1d4ed8}
+.stage-completed{background:#dcfce7;color:#166534}
+.stage-hold{background:#e5e7eb;color:#374151}
+.stage-overdue{background:#fee2e2;color:#b91c1c}
+.priority-normal{background:#dcfce7;color:#166534}
+.priority-high{background:#ffedd5;color:#9a3412}
+.priority-urgent{background:#fee2e2;color:#b91c1c}
+.task.overdue{border:2px solid #dc2626;background:#fffafa}
+.task.completed{opacity:.82}
 .hidden{display:none}
 .row{display:flex;gap:10px;align-items:center}
 .row button{width:auto}
@@ -64,6 +75,12 @@ button.secondary{background:#526477}
 <input id="assignee" type="email" required
 placeholder="employee@adwikimpex.com">
 
+<label>Deadline date</label>
+<input id="dueDate" type="date" required>
+
+<label>Deadline time</label>
+<input id="dueTime" type="time" required>
+
 <label>Priority</label>
 <select id="priority">
 <option>Normal</option>
@@ -77,13 +94,37 @@ placeholder="employee@adwikimpex.com">
 
 <div class="card">
 <h3>All Office Tasks</h3>
-<label>Filter tasks</label>
+<div id="taskSummary" class="meta"></div>
+
+<label>Completion stage</label>
 <select id="filter" onchange="renderTasks()">
 <option value="All">All tasks</option>
 <option>Pending</option>
 <option>In Progress</option>
 <option>Completed</option>
 </select>
+
+<label>Deadline view</label>
+<select id="dateFilter" onchange="renderTasks()">
+<option value="All">All dates</option>
+<option value="Today">Today</option>
+<option value="Tomorrow">Tomorrow</option>
+<option value="Upcoming">Upcoming</option>
+<option value="Overdue">Overdue</option>
+<option value="NoDeadline">No deadline</option>
+</select>
+
+<label>Priority filter</label>
+<select id="priorityFilter" onchange="renderTasks()">
+<option value="All">All priorities</option>
+<option>Normal</option>
+<option>High</option>
+<option>Urgent</option>
+</select>
+
+<label>Filter by assignee email</label>
+<input id="employeeFilter" type="email" placeholder="Enter employee email" oninput="renderTasks()">
+
 <div id="taskList">Loading tasks...</div>
 </div>
 </section>
@@ -105,6 +146,11 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 const provider = new firebase.auth.GoogleAuthProvider();
+
+// Default deadline date to today; choose the actual time.
+const today = new Date();
+const todayLocal = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
+document.getElementById("dueDate").value = todayLocal;
 
 provider.setCustomParameters({ prompt: "select_account" });
 
@@ -138,13 +184,9 @@ async function login() {
   showLoginMessage("");
 
   try {
-    // A popup avoids the cross-domain redirect/session issues commonly
-    // encountered when a Firebase app is hosted on GitHub Pages.
     await auth.signInWithPopup(provider);
   } catch (error) {
     console.error("Google sign-in error:", error);
-
-    // If the browser blocks popups or does not support them, use redirect.
     const redirectFallbackCodes = [
       "auth/popup-blocked",
       "auth/operation-not-supported-in-this-environment"
@@ -162,7 +204,6 @@ async function login() {
       showLoginMessage(getFriendlyAuthError(error));
     }
   } finally {
-    // A successful redirect navigates away; otherwise restore the button.
     loginButton.disabled = false;
     loginButton.textContent = "Sign in with Google";
   }
@@ -194,12 +235,10 @@ async function logout() {
   }
 }
 
-// Set persistence explicitly so the session survives browser restarts.
 (async function initializeAuthentication() {
   try {
     await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
-    // Complete any pending redirect sign-in before handling the auth state.
     try {
       await auth.getRedirectResult();
     } catch (error) {
@@ -257,14 +296,15 @@ function listenTasks() {
       "Unable to load tasks: " + error.message;
   });
 }
-
-document.getElementById("taskForm").addEventListener("submit", async e => {
+  document.getElementById("taskForm").addEventListener("submit", async e => {
   e.preventDefault();
 
   const msg = document.getElementById("taskMessage");
   const title = document.getElementById("title").value.trim();
   const email = document.getElementById("assignee").value.trim().toLowerCase();
   const priority = document.getElementById("priority").value;
+  const dueDate = document.getElementById("dueDate").value;
+  const dueTime = document.getElementById("dueTime").value;
 
   msg.style.color = "#b42318";
 
@@ -278,12 +318,28 @@ document.getElementById("taskForm").addEventListener("submit", async e => {
     return;
   }
 
+  if (!dueDate || !dueTime) {
+    msg.textContent = "Please select both a deadline date and time.";
+    return;
+  }
+
+  const dueAt = new Date(dueDate + "T" + dueTime + ":00");
+  if (Number.isNaN(dueAt.getTime())) {
+    msg.textContent = "Please enter a valid deadline.";
+    return;
+  }
+
   try {
     await db.collection("tasks").add({
       title: title,
       assigneeEmail: email,
       createdBy: currentUser.email,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      dueAt: firebase.firestore.Timestamp.fromDate(dueAt),
+      dueDateText: dueDate,
+      dueTimeText: dueTime,
+      deadlineHistory: [],
+      reminderSentForDueAt: null,
       status: "Pending",
       priority: priority
     });
@@ -297,37 +353,127 @@ document.getElementById("taskForm").addEventListener("submit", async e => {
   }
 });
 
-function renderTasks() {
+function toDate(value) {
+  if (!value) return null;
+  if (value.toDate) return value.toDate();
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function isSameDay(a, b) {
+  return a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
+}
+
+function stageClass(status) {
+  return ({
+    "Pending": "stage-pending",
+    "In Progress": "stage-progress",
+    "Completed": "stage-completed",
+    "On Hold": "stage-hold"
+  })[status] || "stage-pending";
+}
+
+function priorityClass(priority) {
+  return ({
+    "Normal": "priority-normal",
+    "High": "priority-high",
+    "Urgent": "priority-urgent"
+  })[priority] || "priority-normal";
+}
+
+function isOverdue(task) {
+  const due = toDate(task.dueAt);
+  return !!(due && task.status !== "Completed" && due.getTime() < Date.now());
+}
+
+function formatDateTime(value) {
+  const d = toDate(value);
+  return d ? d.toLocaleString("en-IN", {
+    day: "2-digit", month: "short", year: "numeric",
+    hour: "2-digit", minute: "2-digit"
+  }) : "Not set";
+}
+  function renderTasks() {
   const list = document.getElementById("taskList");
-  const filter = document.getElementById("filter").value;
-  const visible = tasks.filter(t => filter === "All" || t.status === filter);
+  const stageFilter = document.getElementById("filter").value;
+  const dateFilter = document.getElementById("dateFilter").value;
+  const priorityFilter = document.getElementById("priorityFilter").value;
+  const employeeFilter = document.getElementById("employeeFilter").value.trim().toLowerCase();
+  const now = new Date();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(now.getDate() + 1);
+
+  const visible = tasks.filter(t => {
+    const due = toDate(t.dueAt);
+    if (stageFilter !== "All" && (t.status || "Pending") !== stageFilter) return false;
+    if (priorityFilter !== "All" && (t.priority || "Normal") !== priorityFilter) return false;
+    if (employeeFilter && !(t.assigneeEmail || "").toLowerCase().includes(employeeFilter)) return false;
+
+    if (dateFilter === "NoDeadline" && due) return false;
+    if (dateFilter === "Today" && !(due && isSameDay(due, now))) return false;
+    if (dateFilter === "Tomorrow" && !(due && isSameDay(due, tomorrow))) return false;
+    if (dateFilter === "Upcoming" && !(due && due > new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1) && !isOverdue(t))) return false;
+    if (dateFilter === "Overdue" && !isOverdue(t)) return false;
+    return true;
+  });
+
+  const pending = tasks.filter(t => (t.status || "Pending") !== "Completed").length;
+  const completed = tasks.filter(t => t.status === "Completed").length;
+  const overdue = tasks.filter(isOverdue).length;
+  document.getElementById("taskSummary").textContent =
+    `Total: ${tasks.length} | Active: ${pending} | Completed: ${completed} | Overdue: ${overdue}`;
 
   list.innerHTML = "";
-
   if (!visible.length) {
-    list.textContent = "No tasks found.";
+    list.textContent = "No tasks found for these filters.";
     return;
   }
 
   visible.forEach(t => {
+    const overdue = isOverdue(t);
     const card = document.createElement("div");
-    card.className = "task";
+    card.className = "task" + (overdue ? " overdue" : "") +
+      (t.status === "Completed" ? " completed" : "");
 
     const title = document.createElement("h3");
     title.textContent = t.title || "Untitled task";
 
+    const badges = document.createElement("div");
+    badges.className = "badges";
+    const stage = document.createElement("span");
+    stage.className = "tag " + stageClass(t.status || "Pending");
+    stage.textContent = t.status || "Pending";
+    const priority = document.createElement("span");
+    priority.className = "tag " + priorityClass(t.priority || "Normal");
+    priority.textContent = (t.priority || "Normal") + " priority";
+    badges.append(stage, priority);
+
+    if (overdue) {
+      const overdueTag = document.createElement("span");
+      overdueTag.className = "tag stage-overdue";
+      overdueTag.textContent = "OVERDUE";
+      badges.appendChild(overdueTag);
+    }
+
     const meta = document.createElement("div");
     meta.className = "meta";
-    meta.textContent = "Assigned to: " + (t.assigneeEmail || "") +
+    meta.textContent =
+      "Assigned to: " + (t.assigneeEmail || "") +
       " | Created by: " + (t.createdBy || "") +
-      " | Priority: " + (t.priority || "Normal");
+      " | Created: " + formatDateTime(t.createdAt) +
+      " | Deadline: " + formatDateTime(t.dueAt);
 
-    const status = document.createElement("p");
-    status.className = "status";
-    status.textContent = "Status: " + (t.status || "Pending");
-
-    card.append(title, meta, status);
-
+    const history = document.createElement("div");
+    history.className = "meta";
+    const historyItems = Array.isArray(t.deadlineHistory) ? t.deadlineHistory : [];
+    if (historyItems.length) {
+      history.textContent = "Deadline extended " + historyItems.length +
+        " time(s). Latest change: " + formatDateTime(historyItems[historyItems.length - 1].changedAt);
+    }
+    const statusLabel = document.createElement("label");
+    statusLabel.textContent = "Update completion stage";
     const select = document.createElement("select");
     ["Pending", "In Progress", "Completed"].forEach(s => {
       const option = document.createElement("option");
@@ -341,14 +487,92 @@ function renderTasks() {
     button.textContent = "Update Status";
     button.onclick = () => updateStatus(t.id, select.value, button);
 
-    card.append(select, button);
+    card.append(title, badges, meta, history, statusLabel, select, button);
+
+    if (currentUser && t.createdBy &&
+        currentUser.email.toLowerCase() === t.createdBy.toLowerCase() &&
+        t.status !== "Completed") {
+      const extend = document.createElement("button");
+      extend.className = "secondary";
+      extend.textContent = "Extend Deadline";
+      extend.onclick = () => extendDeadline(t);
+      card.appendChild(extend);
+    }
+
+    if (historyItems.length) {
+      const details = document.createElement("details");
+      const summary = document.createElement("summary");
+      summary.textContent = "View deadline extension history";
+      const historyList = document.createElement("div");
+      historyList.className = "meta";
+      historyItems.forEach(item => {
+        const line = document.createElement("p");
+        line.textContent =
+          `${formatDateTime(item.oldDueAt)} → ${formatDateTime(item.newDueAt)} | By: ${item.changedBy || "Unknown"} | Reason: ${item.reason || "Not provided"}`;
+        historyList.appendChild(line);
+      });
+      details.append(summary, historyList);
+      card.appendChild(details);
+    }
+
     list.appendChild(card);
   });
 }
 
+async function extendDeadline(task) {
+  if (!currentUser || !task.createdBy ||
+      currentUser.email.toLowerCase() !== task.createdBy.toLowerCase()) {
+    alert("Only the person who created this task can extend its deadline.");
+    return;
+  }
+
+  const currentDue = toDate(task.dueAt);
+  const dateDefault = currentDue
+    ? `${currentDue.getFullYear()}-${String(currentDue.getMonth()+1).padStart(2,"0")}-${String(currentDue.getDate()).padStart(2,"0")}`
+    : "";
+  const timeDefault = currentDue
+    ? `${String(currentDue.getHours()).padStart(2,"0")}:${String(currentDue.getMinutes()).padStart(2,"0")}`
+    : "17:00";
+
+  const newDate = prompt("Enter the new deadline date (YYYY-MM-DD):", dateDefault);
+  if (!newDate) return;
+  const newTime = prompt("Enter the new deadline time (HH:MM, 24-hour):", timeDefault);
+  if (!newTime) return;
+  const reason = prompt("Reason for extending the deadline:");
+  if (reason === null) return;
+
+  const nextDue = new Date(`${newDate}T${newTime}:00`);
+  if (Number.isNaN(nextDue.getTime()) || (currentDue && nextDue <= currentDue)) {
+    alert("Please enter a valid deadline later than the current deadline.");
+    return;
+  }
+  try {
+    const oldDueAt = task.dueAt || null;
+    const historyEntry = {
+      oldDueAt: oldDueAt,
+      newDueAt: firebase.firestore.Timestamp.fromDate(nextDue),
+      changedBy: currentUser.email,
+      changedAt: firebase.firestore.Timestamp.now(),
+      reason: reason.trim()
+    };
+
+    await db.collection("tasks").doc(task.id).update({
+      dueAt: firebase.firestore.Timestamp.fromDate(nextDue),
+      dueDateText: newDate,
+      dueTimeText: newTime,
+      deadlineHistory: firebase.firestore.FieldValue.arrayUnion(historyEntry),
+      reminderSentForDueAt: null,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    alert("Deadline extended. The task deadline has been updated.");
+  } catch (error) {
+    alert("Deadline extension failed: " + error.message +
+      "\\nIf Firestore rules reject this update, we must update the rules to authorize the task creator only.");
+  }
+}
+
 async function updateStatus(id, status, button) {
   button.disabled = true;
-
   try {
     await db.collection("tasks").doc(id).update({
       status: status,
