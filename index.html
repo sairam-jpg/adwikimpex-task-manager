@@ -20,6 +20,82 @@
     opacity: 1 !important;
 }
 header .brand p{color:#fff;font-size:15px}.login-card{margin:24px auto}}
+
+/* Adwik Impex refreshed workspace UI */
+:root{
+ --navy:#102b46;--blue:#1769aa;--ink:#172b3d;--muted:#667789;
+ --line:#dce7ee;--bg:#eef4f7;--white:#fff;--teal:#0f9d91;
+ --aqua:#dff7f3;--shadow:0 14px 36px rgba(16,43,70,.09)
+}
+body{background:radial-gradient(circle at 8% 0%,#e0f5f2 0,transparent 28%),linear-gradient(135deg,#f4f8fb,#edf4f7);min-height:100vh}
+header{background:linear-gradient(120deg,#102b46 0%,#1769aa 62%,#0f9d91 100%);padding:20px 22px;position:relative;overflow:hidden}
+header:after{content:"";position:absolute;width:260px;height:260px;border:1px solid rgba(255,255,255,.13);border-radius:50%;right:-75px;top:-150px;box-shadow:0 0 0 28px rgba(255,255,255,.035),0 0 0 58px rgba(255,255,255,.025)}
+.brand{position:relative;z-index:1}
+.brand img{border-radius:14px;box-shadow:0 8px 22px rgba(0,0,0,.12)}
+main{max-width:1180px;margin:30px auto}
+.card{border:1px solid rgba(211,225,234,.9);border-radius:19px;box-shadow:var(--shadow);padding:24px;transition:box-shadow .18s ease,transform .18s ease}
+.card:hover{box-shadow:0 18px 42px rgba(16,43,70,.11)}
+.section-kicker{color:var(--teal);letter-spacing:1.35px}
+h3{letter-spacing:-.25px}
+input,select,textarea{border:1px solid #d7e3ea;border-radius:11px;background:#fbfdfe;transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus,textarea:focus{outline:0;border-color:#38a99e;box-shadow:0 0 0 3px rgba(15,157,145,.12)}
+button{border-radius:11px;background:linear-gradient(120deg,#1769aa,#0f9d91);box-shadow:0 5px 12px rgba(23,105,170,.14)}
+button:hover{filter:brightness(1.04);transform:translateY(-1px)}
+button.secondary{background:#e8f4f5;color:#145b63;border:1px solid #cce7e5;box-shadow:none}
+.login-card{border-radius:24px;box-shadow:0 22px 55px rgba(16,43,70,.13);border:1px solid #d9e8ee}
+.metric{background:linear-gradient(145deg,#f7fbfd,#edf7f6);border:1px solid #dcebed;border-radius:15px;padding:17px}
+.metric strong{font-size:27px;color:#123d5c}
+.metric span{font-weight:700;letter-spacing:.15px}
+.task{border:1px solid #dce7ed;border-radius:16px;padding:19px;box-shadow:0 5px 17px rgba(16,43,70,.045);transition:transform .15s,box-shadow .15s}
+.task:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(16,43,70,.08)}
+.task h3{font-size:17px}
+.tag{letter-spacing:.2px}
+.stage-pending{background:#fff2cc;color:#805600}
+.stage-progress{background:#dceeff;color:#1558a6}
+.stage-completed{background:#d9f5e7;color:#14643d}
+.stage-overdue{background:#ffe1df;color:#a82720}
+.priority-normal{background:#e1f5eb;color:#17633c}
+.priority-high{background:#ffecd9;color:#97430a}
+.priority-urgent{background:#ffe0e0;color:#a51f2b}
+.description{background:#f2f7f9;border:1px solid #e5eef2;line-height:1.55}
+.comment-box{border-top:1px solid #e1ebef}
+.comment{background:#f1f7f8}
+.task-actions{display:flex;gap:9px;align-items:end;flex-wrap:wrap;margin-top:12px}
+.task-actions .status-control{flex:1;min-width:190px}
+.task-actions button{width:auto;min-width:125px}
+.permission-note{font-size:12px;color:#526b7b;background:#eff8f7;border:1px solid #d6eeea;padding:9px 11px;border-radius:10px;margin-top:11px}
+.owner-label{display:inline-flex;align-items:center;gap:5px;background:#e6f2fa;color:#185a87;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:800}
+.assignee-label{display:inline-flex;align-items:center;gap:5px;background:#e1f6f2;color:#08756b;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:800}
+@media(max-width:650px){
+ main{margin:15px auto;padding:0 10px}
+ .card{padding:17px;border-radius:16px}
+ .task{padding:15px}
+ .task-actions{display:grid;grid-template-columns:1fr}
+ .task-actions button{width:100%}
+ .brand img{width:170px;height:64px}
+}
+
+
+/* In-app task editor */
+.modal-backdrop{position:fixed;inset:0;z-index:1000;background:rgba(8,25,42,.62);backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;padding:18px;overflow-y:auto}
+.modal-backdrop.hidden{display:none}
+.edit-modal{width:min(680px,100%);max-height:calc(100vh - 36px);overflow-y:auto;background:#fff;border:1px solid #dce8ee;border-radius:22px;box-shadow:0 28px 80px rgba(5,25,43,.28);padding:25px}
+.edit-modal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:18px}
+.edit-modal-head h3{margin:4px 0;font-size:23px;color:#102b46}
+.edit-modal-head p{margin:0;color:#667789;font-size:13px}
+.edit-modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+.edit-modal-grid .full{grid-column:1/-1}
+.edit-modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid #e5edf1}
+.modal-close{background:#eef4f7!important;color:#34536a!important;border:1px solid #dce7ed!important;box-shadow:none!important;padding:8px 12px!important}
+.edit-error{color:#b42318;font-size:13px;min-height:18px;margin-top:8px}
+@media(max-width:600px){
+ .edit-modal{padding:18px;border-radius:17px}
+ .edit-modal-grid{grid-template-columns:1fr}
+ .edit-modal-grid .full{grid-column:auto}
+ .edit-modal-actions{display:grid;grid-template-columns:1fr}
+ .edit-modal-actions button{width:100%}
+}
+
 </style>
 </head>
 <body>
@@ -27,11 +103,11 @@ header .brand p{color:#fff;font-size:15px}.login-card{margin:24px auto}}
 <main>
 <section id="login" class="card login-card">
 <img class="login-logo" src="data:image/webp;base64,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" alt=" logo" onerror="this.style.display='none'">
-<div class="section-kicker"></div><h2>Task Manager</h2><p>Organise work. Own deadlines. Get things done.</p>
+<div class="section-kicker"></div><h2>Task Manager</h2><p>One team. Clear ownership. Work that moves forward.</p>
 <button onclick="login()">Sign in with Google</button><p class="help">For authorised  employees only · Use your @adwikimpex.com account.</p><p id="message"></p>
 </section>
 <section id="app" class="hidden">
-<div class="card"><div class="row"><div style="flex:1"><div class="section-kicker">WORKSPACE</div><h3 style="margin:0 0 4px">Office Dashboard</h3><div id="userEmail" class="meta"></div></div><button class="secondary" onclick="logout()">Sign out</button></div></div>
+<div class="card"><div class="row"><div style="flex:1"><div class="section-kicker">WORKSPACE</div><h3 style="margin:0 0 4px">Team Workspace</h3><div id="userEmail" class="meta"></div></div><button class="secondary" onclick="logout()">Sign out</button></div></div>
 <div class="card"><div class="section-kicker">NEW WORK ITEM</div><h3>Create a Task</h3>
 <form id="taskForm">
 <label>Task title</label><input id="title" maxlength="140" required placeholder="e.g. Prepare customer quotation">
@@ -46,6 +122,7 @@ header .brand p{color:#fff;font-size:15px}.login-card{margin:24px auto}}
 <div class="card">
 <div class="section-kicker">TEAM WORKLOAD</div><h3>All Office Tasks</h3>
 <div id="taskSummary" class="summary-grid"></div>
+<div class="permission-note">Everyone can view team tasks. The person who allotted a task controls its details; the assigned employee can update progress and mark it completed.</div>
 
 <label>Completion stage</label>
 <select id="filter" onchange="renderTasks()">
@@ -81,6 +158,59 @@ header .brand p{color:#fff;font-size:15px}.login-card{margin:24px auto}}
 </section>
 </main>
 
+
+<div id="editTaskModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
+  <section class="edit-modal">
+    <div class="edit-modal-head">
+      <div>
+        <div class="section-kicker">TASK MANAGEMENT</div>
+        <h3 id="editModalTitle">Edit task details</h3>
+        <p>Only the person who allotted this task can change these details.</p>
+      </div>
+      <button type="button" class="modal-close" id="editModalClose" aria-label="Close editor">✕</button>
+    </div>
+    <form id="editTaskForm">
+      <div class="edit-modal-grid">
+        <div class="full">
+          <label for="editTitle">Task title</label>
+          <input id="editTitle" maxlength="140" required placeholder="Enter task title">
+        </div>
+        <div class="full">
+          <label for="editDescription">Task description / instructions</label>
+          <textarea id="editDescription" maxlength="3000" rows="4" placeholder="Explain what needs to be done..."></textarea>
+        </div>
+        <div class="full">
+          <label for="editAssignee">Assigned employee company email</label>
+          <input id="editAssignee" type="email" required placeholder="employee@adwikimpex.com">
+        </div>
+        <div>
+          <label for="editDueDate">Deadline date</label>
+          <input id="editDueDate" type="date" required>
+        </div>
+        <div>
+          <label for="editDueTime">Deadline time</label>
+          <input id="editDueTime" type="time" required>
+        </div>
+        <div>
+          <label for="editPriority">Priority</label>
+          <select id="editPriority">
+            <option>Normal</option><option>High</option><option>Urgent</option>
+          </select>
+        </div>
+        <div>
+          <label for="editDriveLink">Google Drive attachment link</label>
+          <input id="editDriveLink" type="url" placeholder="https://drive.google.com/...">
+        </div>
+      </div>
+      <div id="editTaskError" class="edit-error" role="alert"></div>
+      <div class="edit-modal-actions">
+        <button type="button" class="secondary" id="editModalCancel">Cancel</button>
+        <button type="submit" id="editTaskSave">Save task changes</button>
+      </div>
+    </form>
+  </section>
+</div>
+
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyCdWiE0DEK6iaVLArSndVFtb4AmyabpXUw",
@@ -108,6 +238,7 @@ provider.setCustomParameters({ prompt: "select_account" });
 let currentUser = null;
 let tasks = [];
 let unsubscribe = null;
+const commentUnsubscribers = new Map();
 let authReady = false;
 
 const loginSection = document.getElementById("login");
@@ -214,6 +345,7 @@ async function logout() {
 })();
 
 auth.onAuthStateChanged(user => {
+  clearCommentListeners();
   if (unsubscribe) {
     unsubscribe();
     unsubscribe = null;
@@ -299,7 +431,7 @@ document.getElementById("taskForm").addEventListener("submit", async e => {
       description: document.getElementById("description").value.trim(),
       driveLink: document.getElementById("driveLink").value.trim(),
       assigneeEmail: email,
-      createdBy: currentUser.email,
+      createdBy: currentUser.email.toLowerCase(),
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       dueAt: firebase.firestore.Timestamp.fromDate(dueAt),
       dueDateText: dueDate,
@@ -364,6 +496,7 @@ function formatDateTime(value) {
 }
 
 function renderTasks() {
+  clearCommentListeners();
   const list = document.getElementById("taskList");
   const stageFilter = document.getElementById("filter").value;
   const dateFilter = document.getElementById("dateFilter").value;
@@ -443,22 +576,23 @@ function renderTasks() {
         " time(s). Latest change: " + formatDateTime(historyItems[historyItems.length - 1].changedAt);
     }
 
-    const statusLabel = document.createElement("label");
-    statusLabel.textContent = "Update completion stage";
-    const select = document.createElement("select");
-    ["Pending", "In Progress", "Completed"].forEach(s => {
-      const option = document.createElement("option");
-      option.value = s;
-      option.textContent = s;
-      option.selected = (t.status || "Pending") === s;
-      select.appendChild(option);
-    });
-
-    const button = document.createElement("button");
-    button.textContent = "Update Status";
-    button.onclick = () => updateStatus(t.id, select.value, button);
+    const isAllotter = !!(currentUser && t.createdBy &&
+      currentUser.email.toLowerCase() === String(t.createdBy).toLowerCase());
+    const isAssignee = !!(currentUser && t.assigneeEmail &&
+      currentUser.email.toLowerCase() === String(t.assigneeEmail).toLowerCase());
+    const canUpdateProgress = isAllotter || isAssignee;
 
     card.append(title, badges, meta);
+    const ownership = document.createElement("div");
+    ownership.className = "badges";
+    const creatorBadge = document.createElement("span");
+    creatorBadge.className = "owner-label";
+    creatorBadge.textContent = isAllotter ? "You allotted this task" : "Allotted by " + (t.createdBy || "team member");
+    const assigneeBadge = document.createElement("span");
+    assigneeBadge.className = "assignee-label";
+    assigneeBadge.textContent = isAssignee ? "Assigned to you" : "Assigned to " + (t.assigneeEmail || "unassigned");
+    ownership.append(creatorBadge, assigneeBadge);
+    card.appendChild(ownership);
 
     if (t.description) {
       const desc = document.createElement("div");
@@ -478,17 +612,52 @@ function renderTasks() {
         card.appendChild(link);
       }
     }
-    card.append(history, statusLabel, select, button);
+    card.appendChild(history);
 
-    if (currentUser && t.createdBy &&
-        currentUser.email.toLowerCase() === t.createdBy.toLowerCase() &&
-        t.status !== "Completed") {
-      const extend = document.createElement("button");
-      extend.className = "secondary";
-      extend.textContent = "Extend Deadline";
-      extend.onclick = () => extendDeadline(t);
-      card.appendChild(extend);
+    const actionArea = document.createElement("div");
+    actionArea.className = "task-actions";
+
+    if (canUpdateProgress) {
+      const statusWrap = document.createElement("div");
+      statusWrap.className = "status-control";
+      const statusLabel = document.createElement("label");
+      statusLabel.textContent = "Update progress";
+      const select = document.createElement("select");
+      ["Pending", "In Progress", "Completed"].forEach(s => {
+        const option = document.createElement("option");
+        option.value = s;
+        option.textContent = s;
+        option.selected = (t.status || "Pending") === s;
+        select.appendChild(option);
+      });
+      statusWrap.append(statusLabel, select);
+      const statusButton = document.createElement("button");
+      statusButton.textContent = "Save progress";
+      statusButton.onclick = () => updateStatus(t.id, select.value, statusButton);
+      actionArea.append(statusWrap, statusButton);
+    } else {
+      const note = document.createElement("div");
+      note.className = "permission-note";
+      note.textContent = "View only: the task allotter and assigned employee can update progress.";
+      actionArea.appendChild(note);
     }
+
+    if (isAllotter) {
+      const editButton = document.createElement("button");
+      editButton.className = "secondary";
+      editButton.textContent = "Edit task details";
+      editButton.onclick = () => openEditTaskModal(t);
+      actionArea.appendChild(editButton);
+
+      if (t.status !== "Completed") {
+        const extend = document.createElement("button");
+        extend.className = "secondary";
+        extend.textContent = "Extend deadline";
+        extend.onclick = () => extendDeadline(t);
+        actionArea.appendChild(extend);
+      }
+    }
+    card.appendChild(actionArea);
 
     if (historyItems.length) {
       const details = document.createElement("details");
@@ -539,8 +708,13 @@ function safeDriveUrl(value) {
   } catch (e) { return ""; }
 }
 
+function clearCommentListeners() {
+  commentUnsubscribers.forEach(unsub => { try { unsub(); } catch (e) {} });
+  commentUnsubscribers.clear();
+}
+
 function loadComments(taskId, container) {
-  db.collection("tasks").doc(taskId).collection("comments")
+  const unsub = db.collection("tasks").doc(taskId).collection("comments")
     .orderBy("createdAt", "asc").onSnapshot(snapshot => {
       container.innerHTML = "";
       if (snapshot.empty) { container.textContent = "No comments yet."; return; }
@@ -555,6 +729,7 @@ function loadComments(taskId, container) {
         container.appendChild(item);
       });
     }, error => { container.textContent = "Comments unavailable: " + error.message; });
+  commentUnsubscribers.set(taskId, unsub);
 }
 
 async function addComment(taskId, input, button) {
@@ -565,13 +740,145 @@ async function addComment(taskId, input, button) {
   try {
     await db.collection("tasks").doc(taskId).collection("comments").add({
       text: text,
-      authorEmail: currentUser.email,
+      authorEmail: currentUser.email.toLowerCase(),
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     input.value = "";
   } catch (error) { alert("Comment could not be posted: " + error.message); }
   finally { button.disabled = false; }
 }
+
+let editingTaskId = null;
+
+function openEditTaskModal(task) {
+  if (!currentUser || !task || !task.createdBy ||
+      currentUser.email.toLowerCase() !== String(task.createdBy).toLowerCase()) {
+    alert("Only the person who allotted this task can edit its details.");
+    return;
+  }
+
+  editingTaskId = task.id;
+  const due = toDate(task.dueAt);
+  const dateValue = due
+    ? `${due.getFullYear()}-${String(due.getMonth()+1).padStart(2,"0")}-${String(due.getDate()).padStart(2,"0")}` : "";
+  const timeValue = due
+    ? `${String(due.getHours()).padStart(2,"0")}:${String(due.getMinutes()).padStart(2,"0")}` : "";
+
+  document.getElementById("editTitle").value = task.title || "";
+  document.getElementById("editDescription").value = task.description || "";
+  document.getElementById("editAssignee").value = task.assigneeEmail || "";
+  document.getElementById("editDueDate").value = dateValue;
+  document.getElementById("editDueTime").value = timeValue;
+  document.getElementById("editPriority").value = task.priority || "Normal";
+  document.getElementById("editDriveLink").value = task.driveLink || "";
+  document.getElementById("editTaskError").textContent = "";
+  document.getElementById("editTaskSave").disabled = false;
+  document.getElementById("editTaskSave").textContent = "Save task changes";
+  document.getElementById("editTaskModal").classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+  document.getElementById("editTitle").focus();
+}
+
+function closeEditTaskModal() {
+  document.getElementById("editTaskModal").classList.add("hidden");
+  document.body.style.overflow = "";
+  editingTaskId = null;
+}
+
+document.getElementById("editModalClose").addEventListener("click", closeEditTaskModal);
+document.getElementById("editModalCancel").addEventListener("click", closeEditTaskModal);
+document.getElementById("editTaskModal").addEventListener("click", event => {
+  if (event.target.id === "editTaskModal") closeEditTaskModal();
+});
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape" &&
+      !document.getElementById("editTaskModal").classList.contains("hidden")) {
+    closeEditTaskModal();
+  }
+});
+
+document.getElementById("editTaskForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  const errorBox = document.getElementById("editTaskError");
+  const saveButton = document.getElementById("editTaskSave");
+  const task = tasks.find(item => item.id === editingTaskId);
+
+  if (!task || !currentUser || !task.createdBy ||
+      currentUser.email.toLowerCase() !== String(task.createdBy).toLowerCase()) {
+    errorBox.textContent = "Permission denied. Only the task allotter can edit these details.";
+    return;
+  }
+
+  const title = document.getElementById("editTitle").value.trim();
+  const description = document.getElementById("editDescription").value.trim();
+  const assigneeEmail = document.getElementById("editAssignee").value.trim().toLowerCase();
+  const dueDate = document.getElementById("editDueDate").value;
+  const dueTime = document.getElementById("editDueTime").value;
+  const priority = document.getElementById("editPriority").value;
+  const driveLink = document.getElementById("editDriveLink").value.trim();
+
+  if (!title) { errorBox.textContent = "Task title cannot be empty."; return; }
+  if (!assigneeEmail.endsWith("@adwikimpex.com")) {
+    errorBox.textContent = "Use a valid @adwikimpex.com company email for the assignee.";
+    return;
+  }
+  if (!dueDate || !dueTime) {
+    errorBox.textContent = "Please enter both the deadline date and time.";
+    return;
+  }
+  const nextDue = new Date(`${dueDate}T${dueTime}:00`);
+  if (Number.isNaN(nextDue.getTime())) {
+    errorBox.textContent = "Please enter a valid deadline.";
+    return;
+  }
+  if (!["Normal", "High", "Urgent"].includes(priority)) {
+    errorBox.textContent = "Please choose a valid priority.";
+    return;
+  }
+  if (driveLink && !safeDriveUrl(driveLink)) {
+    errorBox.textContent = "Use a valid HTTPS Google Drive or Google Docs sharing link.";
+    return;
+  }
+
+  const oldDue = toDate(task.dueAt);
+  const updates = {
+    title,
+    description,
+    assigneeEmail,
+    dueAt: firebase.firestore.Timestamp.fromDate(nextDue),
+    dueDateText: dueDate,
+    dueTimeText: dueTime,
+    priority,
+    driveLink,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+
+  if (!oldDue || oldDue.getTime() !== nextDue.getTime()) {
+    const historyEntry = {
+      oldDueAt: task.dueAt || null,
+      newDueAt: firebase.firestore.Timestamp.fromDate(nextDue),
+      changedBy: currentUser.email.toLowerCase(),
+      changedAt: firebase.firestore.Timestamp.now(),
+      reason: "Deadline edited by task allotter"
+    };
+    updates.deadlineHistory = firebase.firestore.FieldValue.arrayUnion(historyEntry);
+    updates.reminderSentForDueAt = null;
+  }
+
+  saveButton.disabled = true;
+  saveButton.textContent = "Saving...";
+  errorBox.textContent = "";
+
+  try {
+    await db.collection("tasks").doc(task.id).update(updates);
+    closeEditTaskModal();
+    alert("Task details updated successfully.");
+  } catch (error) {
+    errorBox.textContent = "Could not save changes: " + error.message;
+    saveButton.disabled = false;
+    saveButton.textContent = "Save task changes";
+  }
+});
 
 async function extendDeadline(task) {
   if (!currentUser || !task.createdBy ||
@@ -627,6 +934,18 @@ async function extendDeadline(task) {
 }
 
 async function updateStatus(id, status, button) {
+  const task = tasks.find(item => item.id === id);
+  const email = currentUser && currentUser.email ? currentUser.email.toLowerCase() : "";
+  const isAllotter = !!(task && task.createdBy && email === String(task.createdBy).toLowerCase());
+  const isAssignee = !!(task && task.assigneeEmail && email === String(task.assigneeEmail).toLowerCase());
+  if (!isAllotter && !isAssignee) {
+    alert("Only the person who allotted this task or the assigned employee can update progress.");
+    return;
+  }
+  if (!["Pending", "In Progress", "Completed"].includes(status)) {
+    alert("Invalid task status.");
+    return;
+  }
   button.disabled = true;
   try {
     await db.collection("tasks").doc(id).update({
