@@ -96,6 +96,30 @@ button.secondary{background:#e8f4f5;color:#145b63;border:1px solid #cce7e5;box-s
  .edit-modal-actions button{width:100%}
 }
 
+/* Stronger Adwik ocean palette: visible colour hierarchy across the workspace */
+:root{--navy:#082b49;--blue:#0877c9;--ink:#102d43;--muted:#587184;--line:#cfe2eb;--bg:#eaf4f8;--white:#fff;--teal:#00a99d;--aqua:#d9f7f4;--gold:#f2b84b;--shadow:0 14px 36px rgba(8,43,73,.11)}
+body{background:radial-gradient(ellipse at 4% 0%,#bfeee9 0,transparent 30%),radial-gradient(ellipse at 100% 8%,#d4eaff 0,transparent 27%),linear-gradient(135deg,#edf7fa,#e8f1f8)}
+header{background:linear-gradient(112deg,#062844 0%,#075b9b 48%,#00a99d 100%);border-bottom:4px solid var(--gold)}
+.card{background:linear-gradient(145deg,#fff 0%,#fbfeff 100%);border-color:#c9e0e9}
+.card:nth-of-type(2){border-top:4px solid var(--teal)}
+.card:nth-of-type(3){border-top:4px solid var(--blue)}
+.section-kicker{color:#008f88}
+button{background:linear-gradient(115deg,#0877c9 0%,#00a99d 100%);box-shadow:0 7px 17px rgba(0,126,157,.2)}
+button.secondary{background:#e4f4f7;color:#07577a;border:1px solid #b9dce5}
+.metric:nth-child(1){background:linear-gradient(145deg,#e1f7f4,#c9f0e9);border-color:#a8e3d9}
+.metric:nth-child(2){background:linear-gradient(145deg,#e5f1ff,#cfe4ff);border-color:#b8d5f7}
+.metric:nth-child(3){background:linear-gradient(145deg,#fff5dc,#ffebbd);border-color:#f5dda0}
+.metric:nth-child(4){background:linear-gradient(145deg,#f0eaff,#e1d9ff);border-color:#d2c7fa}
+.metric strong{color:#073b60}
+.task{background:linear-gradient(120deg,#fff 0%,#f8fcff 100%);border-left:4px solid #26b8ae}
+.task.overdue{border-left:4px solid #dc3e48}
+.task.completed{border-left:4px solid #28a66b}
+.permission-note{background:linear-gradient(100deg,#e1f7f3,#e4f1ff);border-color:#b9e5e2;color:#164d66}
+.edit-modal{border-top:5px solid var(--teal)}
+select{cursor:pointer}
+select option{padding:8px}
+@media(max-width:650px){header{padding:16px 14px}.card:nth-of-type(2),.card:nth-of-type(3){border-radius:16px}}
+
 </style>
 </head>
 <body>
@@ -112,7 +136,7 @@ button.secondary{background:#e8f4f5;color:#145b63;border:1px solid #cce7e5;box-s
 <form id="taskForm">
 <label>Task title</label><input id="title" maxlength="140" required placeholder="e.g. Prepare customer quotation">
 <label>Task description / instructions</label><textarea id="description" maxlength="3000" placeholder="Explain what needs to be done, key details, expected outcome..."></textarea>
-<label>Assign to company email</label><input id="assignee" type="email" required placeholder="employee@adwikimpex.com">
+<label>Assign task to employee</label><select id="assignee" required><option value="">Select an employee</option></select><div class="help">Choose from the current employee directory. The directory supports up to seven employees.</div>
 <label>Deadline date</label><input id="dueDate" type="date" required>
 <label>Deadline time</label><input id="dueTime" type="time" required>
 <label>Priority</label><select id="priority"><option>Normal</option><option>High</option><option>Urgent</option></select>
@@ -180,8 +204,8 @@ button.secondary{background:#e8f4f5;color:#145b63;border:1px solid #cce7e5;box-s
           <textarea id="editDescription" maxlength="3000" rows="4" placeholder="Explain what needs to be done..."></textarea>
         </div>
         <div class="full">
-          <label for="editAssignee">Assigned employee company email</label>
-          <input id="editAssignee" type="email" required placeholder="employee@adwikimpex.com">
+          <label for="editAssignee">Assigned employee</label>
+          <select id="editAssignee" required><option value="">Select an employee</option></select>
         </div>
         <div>
           <label for="editDueDate">Deadline date</label>
@@ -227,6 +251,52 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 const provider = new firebase.auth.GoogleAuthProvider();
+
+// Employee directory: four active users today; add up to three more entries here later.
+// Keep each email in lowercase and use the same official company account as Google sign-in.
+const EMPLOYEE_DIRECTORY = [
+  { name: "Kalyan Potluri", email: "kalyan@adwikimpex.com" },
+  { name: "Sairam Ponnada", email: "sairam@adwikimpex.com" },
+  { name: "Sandeep Naiko", email: "accounts@adwikimpex.com" },
+  { name: "Yeshwanth Kumar", email: "yeshwanth@adwikimpex.com" }
+];
+const MAX_EMPLOYEES = 7;
+const EMPLOYEE_ADMIN_EMAILS = ["sairam@adwikimpex.com", "kalyan@adwikimpex.com"];
+
+function employeeName(email) {
+  const normalized = String(email || "").toLowerCase();
+  const employee = EMPLOYEE_DIRECTORY.find(item => item.email === normalized);
+  return employee ? employee.name : normalized;
+}
+
+function populateEmployeeDropdowns() {
+  ["assignee", "editAssignee"].forEach(id => {
+    const select = document.getElementById(id);
+    if (!select) return;
+    const current = select.value;
+    select.innerHTML = '<option value="">Select an employee</option>';
+    EMPLOYEE_DIRECTORY.slice(0, MAX_EMPLOYEES).forEach(employee => {
+      const option = document.createElement("option");
+      option.value = employee.email;
+      option.textContent = `${employee.name} — ${employee.email}`;
+      select.appendChild(option);
+    });
+    // Preserve an older task assignee even if that account is not in the current directory.
+    if (current && !EMPLOYEE_DIRECTORY.some(item => item.email === current)) {
+      const option = document.createElement("option");
+      option.value = current;
+      option.textContent = `Existing assignee — ${current}`;
+      select.appendChild(option);
+    }
+    if (current) select.value = current;
+  });
+}
+
+function isEmployeeAdministrator(user = currentUser) {
+  return !!(user && user.email && EMPLOYEE_ADMIN_EMAILS.includes(user.email.toLowerCase()));
+}
+
+populateEmployeeDropdowns();
 
 // Default deadline date to today; the employee/creator chooses the actual time.
 const today = new Date();
@@ -356,7 +426,7 @@ auth.onAuthStateChanged(user => {
   if (isCompanyAccount(user)) {
     loginSection.classList.add("hidden");
     appSection.classList.remove("hidden");
-    document.getElementById("userEmail").textContent = user.email;
+    document.getElementById("userEmail").textContent = user.email + (isEmployeeAdministrator(user) ? " · Employee directory administrator" : "");
     showLoginMessage("");
     listenTasks();
   } else {
@@ -404,8 +474,8 @@ document.getElementById("taskForm").addEventListener("submit", async e => {
     return;
   }
 
-  if (!email.endsWith("@adwikimpex.com")) {
-    msg.textContent = "Please enter a valid @adwikimpex.com company email.";
+  if (!EMPLOYEE_DIRECTORY.some(employee => employee.email === email)) {
+    msg.textContent = "Please select an employee from the directory.";
     return;
   }
 
@@ -590,7 +660,7 @@ function renderTasks() {
     creatorBadge.textContent = isAllotter ? "You allotted this task" : "Allotted by " + (t.createdBy || "team member");
     const assigneeBadge = document.createElement("span");
     assigneeBadge.className = "assignee-label";
-    assigneeBadge.textContent = isAssignee ? "Assigned to you" : "Assigned to " + (t.assigneeEmail || "unassigned");
+    assigneeBadge.textContent = isAssignee ? "Assigned to you" : "Assigned to " + employeeName(t.assigneeEmail || "unassigned");
     ownership.append(creatorBadge, assigneeBadge);
     card.appendChild(ownership);
 
@@ -764,6 +834,7 @@ function openEditTaskModal(task) {
   const timeValue = due
     ? `${String(due.getHours()).padStart(2,"0")}:${String(due.getMinutes()).padStart(2,"0")}` : "";
 
+  populateEmployeeDropdowns();
   document.getElementById("editTitle").value = task.title || "";
   document.getElementById("editDescription").value = task.description || "";
   document.getElementById("editAssignee").value = task.assigneeEmail || "";
@@ -818,8 +889,8 @@ document.getElementById("editTaskForm").addEventListener("submit", async event =
   const driveLink = document.getElementById("editDriveLink").value.trim();
 
   if (!title) { errorBox.textContent = "Task title cannot be empty."; return; }
-  if (!assigneeEmail.endsWith("@adwikimpex.com")) {
-    errorBox.textContent = "Use a valid @adwikimpex.com company email for the assignee.";
+  if (!EMPLOYEE_DIRECTORY.some(employee => employee.email === assigneeEmail)) {
+    errorBox.textContent = "Please select an employee from the company directory.";
     return;
   }
   if (!dueDate || !dueTime) {
